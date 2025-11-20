@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.livewallpaper">
+>
 
     <application
         android:allowBackup="true"
@@ -11,7 +11,8 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         <service
             android:name=".WallpaperService"
-            android:permission="android.permission.BIND_WALLPAPER">
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" />
             </intent-filter>
