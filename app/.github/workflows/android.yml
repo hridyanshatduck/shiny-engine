@@ -28,9 +28,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Build with Gradle
-        run: ./gradlew assembleRelease
+        run: |
+          cd app
+          ./gradlew assembleRelease
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: app-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          path: app/app/build/outputs/apk/release/app-release.apk
