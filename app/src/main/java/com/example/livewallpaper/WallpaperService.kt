@@ -34,7 +34,10 @@ class WallpaperService : WallpaperService() {
         private var wallpaperSet = false
         private val drawRunnable = object : Runnable {
             override fun run() {
-                draw()
+                if (!isUnlocked || (videoPlayed && !wallpaperSet) || (videoPlayed && wallpaperSet)) {
+                    draw()
+                }
+                // Do not draw while video is playing
                 handler.postDelayed(this, 1000 / 30)
             }
         }
@@ -58,32 +61,29 @@ class WallpaperService : WallpaperService() {
                         !isUnlocked -> {
                             val bitmap = BitmapFactory.decodeResource(context.resources, preImageRes)
                             if (bitmap != null) {
-                                canvas.drawBitmap(bitmap, 0f, 0f, null)
+                                drawBitmapFitCenter(canvas, bitmap)
                             } else {
                                 Log.e("LiveWallpaper", "Failed to decode preImageRes")
                             }
                         }
-                        !videoPlayed -> {
-                            playVideo()
-                            // Optionally draw a frame or a placeholder while video is playing
-                        }
                         videoPlayed && !wallpaperSet -> {
                             val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
                             if (bitmap != null) {
-                                canvas.drawBitmap(bitmap, 0f, 0f, null)
+                                drawBitmapFitCenter(canvas, bitmap)
                                 setWallpaperOnce(bitmap)
                             } else {
                                 Log.e("LiveWallpaper", "Failed to decode postImageRes")
                             }
                         }
-                        else -> {
+                        videoPlayed && wallpaperSet -> {
                             val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
                             if (bitmap != null) {
-                                canvas.drawBitmap(bitmap, 0f, 0f, null)
+                                drawBitmapFitCenter(canvas, bitmap)
                             } else {
                                 Log.e("LiveWallpaper", "Failed to decode postImageRes")
                             }
                         }
+                        // Do not draw while video is playing
                     }
                 } catch (e: Exception) {
                     Log.e("LiveWallpaper", "Exception in draw()", e)
@@ -93,12 +93,32 @@ class WallpaperService : WallpaperService() {
             }
         }
 
+        // Helper to scale and center bitmap
+        private fun drawBitmapFitCenter(canvas: Canvas, bitmap: Bitmap) {
+            val canvasWidth = canvas.width.toFloat()
+            val canvasHeight = canvas.height.toFloat()
+            val bitmapWidth = bitmap.width.toFloat()
+            val bitmapHeight = bitmap.height.toFloat()
+            val scale = Math.min(canvasWidth / bitmapWidth, canvasHeight / bitmapHeight)
+            val dx = (canvasWidth - bitmapWidth * scale) / 2f
+            val dy = (canvasHeight - bitmapHeight * scale) / 2f
+            val saveCount = canvas.save()
+            canvas.translate(dx, dy)
+            canvas.scale(scale, scale)
+            canvas.drawBitmap(bitmap, 0f, 0f, null)
+            canvas.restoreToCount(saveCount)
+        }
+
         private fun playVideo() {
             if (mediaPlayer == null) {
                 try {
-                    mediaPlayer = MediaPlayer.create(context, videoRes)
+                    mediaPlayer = MediaPlayer()
+                    val afd = context.resources.openRawResourceFd(videoRes)
+                    mediaPlayer?.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    afd.close()
                     surface = surfaceHolder.surface
                     mediaPlayer?.setSurface(surface)
+                    mediaPlayer?.isLooping = false
                     mediaPlayer?.setOnCompletionListener {
                         videoPlayed = true
                         mediaPlayer?.release()
@@ -110,6 +130,7 @@ class WallpaperService : WallpaperService() {
                         mediaPlayer = null
                         true
                     }
+                    mediaPlayer?.prepare()
                     mediaPlayer?.start()
                 } catch (e: Exception) {
                     Log.e("LiveWallpaper", "Exception in playVideo()", e)
