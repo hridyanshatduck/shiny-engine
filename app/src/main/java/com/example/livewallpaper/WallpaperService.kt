@@ -133,6 +133,9 @@ class WallpaperService : WallpaperService() {
         // Play video on any visibility (unlock or home)
         override fun onVisibilityChanged(visible: Boolean) {
             isUnlocked = visible
+            if (!visible) {
+                videoPlayed = false
+            }
             if (visible && !videoPlayed && !isVideoPlaying) {
                 playVideo()
             }
