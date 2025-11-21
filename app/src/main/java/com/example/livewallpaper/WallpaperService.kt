@@ -64,23 +64,14 @@ class WallpaperService : WallpaperService() {
                         !isUnlocked -> {
                             val bitmap = BitmapFactory.decodeResource(context.resources, preImageRes)
                             if (bitmap != null) {
-                                drawBitmapFillCrop(canvas, bitmap)
-                            } else {
-                                Log.e("LiveWallpaper", "Failed to decode preImageRes")
+                            videoPlayed -> {
+                                val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
+                                if (bitmap != null) {
+                                    drawBitmapFillCrop(canvas, bitmap)
+                                } else {
+                                    Log.e("LiveWallpaper", "Failed to decode postImageRes")
+                                }
                             }
-                        }
-                        videoPlayed && !wallpaperSet -> {
-                            val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
-                            if (bitmap != null) {
-                                drawBitmapFillCrop(canvas, bitmap)
-                                setWallpaperOnce(bitmap)
-                            } else {
-                                Log.e("LiveWallpaper", "Failed to decode postImageRes")
-                            }
-                        }
-                        videoPlayed && wallpaperSet -> {
-                            val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
-                            if (bitmap != null) {
                                 drawBitmapFillCrop(canvas, bitmap)
                             } else {
                                 Log.e("LiveWallpaper", "Failed to decode postImageRes")
@@ -91,15 +82,6 @@ class WallpaperService : WallpaperService() {
                 } catch (e: Exception) {
                     Log.e("LiveWallpaper", "Exception in draw()", e)
                 } finally {
-                    surfaceHolder.unlockCanvasAndPost(canvas)
-                }
-            }
-        }
-
-        // Helper to scale and crop bitmap to fill canvas (centerCrop)
-        private fun drawBitmapFillCrop(canvas: Canvas, bitmap: Bitmap) {
-            val canvasWidth = canvas.width.toFloat()
-            val canvasHeight = canvas.height.toFloat()
             val bitmapWidth = bitmap.width.toFloat()
             val bitmapHeight = bitmap.height.toFloat()
             val scale = Math.max(canvasWidth / bitmapWidth, canvasHeight / bitmapHeight)
