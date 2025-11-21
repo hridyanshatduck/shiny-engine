@@ -53,40 +53,69 @@ class WallpaperService : WallpaperService() {
         private fun draw() {
             val canvas: Canvas? = surfaceHolder.lockCanvas()
             if (canvas != null) {
-                when {
-                    !isUnlocked -> {
-                        val bitmap = BitmapFactory.decodeResource(context.resources, preImageRes)
-                        canvas.drawBitmap(bitmap, 0f, 0f, null)
+                try {
+                    when {
+                        !isUnlocked -> {
+                            val bitmap = BitmapFactory.decodeResource(context.resources, preImageRes)
+                            if (bitmap != null) {
+                                canvas.drawBitmap(bitmap, 0f, 0f, null)
+                            } else {
+                                Log.e("LiveWallpaper", "Failed to decode preImageRes")
+                            }
+                        }
+                        !videoPlayed -> {
+                            playVideo()
+                            // Optionally draw a frame or a placeholder while video is playing
+                        }
+                        videoPlayed && !wallpaperSet -> {
+                            val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
+                            if (bitmap != null) {
+                                canvas.drawBitmap(bitmap, 0f, 0f, null)
+                                setWallpaperOnce(bitmap)
+                            } else {
+                                Log.e("LiveWallpaper", "Failed to decode postImageRes")
+                            }
+                        }
+                        else -> {
+                            val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
+                            if (bitmap != null) {
+                                canvas.drawBitmap(bitmap, 0f, 0f, null)
+                            } else {
+                                Log.e("LiveWallpaper", "Failed to decode postImageRes")
+                            }
+                        }
                     }
-                    !videoPlayed -> {
-                        playVideo()
-                        // Optionally draw a frame or a placeholder while video is playing
-                    }
-                    videoPlayed && !wallpaperSet -> {
-                        val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
-                        canvas.drawBitmap(bitmap, 0f, 0f, null)
-                        setWallpaperOnce(bitmap)
-                    }
-                    else -> {
-                        val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
-                        canvas.drawBitmap(bitmap, 0f, 0f, null)
-                    }
+                } catch (e: Exception) {
+                    Log.e("LiveWallpaper", "Exception in draw()", e)
+                } finally {
+                    surfaceHolder.unlockCanvasAndPost(canvas)
                 }
-                surfaceHolder.unlockCanvasAndPost(canvas)
             }
         }
 
         private fun playVideo() {
             if (mediaPlayer == null) {
-                mediaPlayer = MediaPlayer.create(context, videoRes)
-                surface = surfaceHolder.surface
-                mediaPlayer?.setSurface(surface)
-                mediaPlayer?.setOnCompletionListener {
-                    videoPlayed = true
+                try {
+                    mediaPlayer = MediaPlayer.create(context, videoRes)
+                    surface = surfaceHolder.surface
+                    mediaPlayer?.setSurface(surface)
+                    mediaPlayer?.setOnCompletionListener {
+                        videoPlayed = true
+                        mediaPlayer?.release()
+                        mediaPlayer = null
+                    }
+                    mediaPlayer?.setOnErrorListener { mp, what, extra ->
+                        Log.e("LiveWallpaper", "MediaPlayer error: what=$what, extra=$extra")
+                        mediaPlayer?.release()
+                        mediaPlayer = null
+                        true
+                    }
+                    mediaPlayer?.start()
+                } catch (e: Exception) {
+                    Log.e("LiveWallpaper", "Exception in playVideo()", e)
                     mediaPlayer?.release()
                     mediaPlayer = null
                 }
-                mediaPlayer?.start()
             }
         }
 
