@@ -34,9 +34,13 @@ class WallpaperService : WallpaperService() {
         private var isVideoPlaying = false
         private val drawRunnable = object : Runnable {
             override fun run() {
-                if (!isUnlocked && !videoPlayed) {
+                if (!isUnlocked) {
+                    // Wallpaper not visible, do nothing
+                } else if (!videoPlayed && !isVideoPlaying) {
+                    // Show pre image before video
                     drawImage(preImageRes)
-                } else if (videoPlayed) {
+                } else if (videoPlayed && !isVideoPlaying) {
+                    // Show post image after video
                     drawImage(postImageRes)
                 }
                 // Do not draw while video is playing
@@ -133,11 +137,20 @@ class WallpaperService : WallpaperService() {
         // Play video on any visibility (unlock or home)
         override fun onVisibilityChanged(visible: Boolean) {
             isUnlocked = visible
-            if (!visible) {
+            if (visible) {
+                // Reset state so video plays on every unlock
                 videoPlayed = false
-            }
-            if (visible && !videoPlayed && !isVideoPlaying) {
+                isVideoPlaying = false
+                handler.post(drawRunnable)
                 playVideo()
+            } else {
+                // Optionally stop video if wallpaper is hidden
+                if (isVideoPlaying) {
+                    mediaPlayer?.stop()
+                    mediaPlayer?.release()
+                    mediaPlayer = null
+                    isVideoPlaying = false
+                }
             }
         }
     }
