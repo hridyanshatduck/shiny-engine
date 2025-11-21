@@ -31,6 +31,7 @@ class WallpaperService : WallpaperService() {
         private val postImageRes = R.drawable.post
         private val videoRes = R.raw.vid1
 
+        private var wallpaperSet = false
         private val drawRunnable = object : Runnable {
             override fun run() {
                 draw()
@@ -52,15 +53,24 @@ class WallpaperService : WallpaperService() {
         private fun draw() {
             val canvas: Canvas? = surfaceHolder.lockCanvas()
             if (canvas != null) {
-                if (!isUnlocked) {
-                    val bitmap = BitmapFactory.decodeResource(context.resources, preImageRes)
-                    canvas.drawBitmap(bitmap, 0f, 0f, null)
-                } else if (!videoPlayed) {
-                    playVideo()
-                } else {
-                    val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
-                    canvas.drawBitmap(bitmap, 0f, 0f, null)
-                    setWallpaper(bitmap)
+                when {
+                    !isUnlocked -> {
+                        val bitmap = BitmapFactory.decodeResource(context.resources, preImageRes)
+                        canvas.drawBitmap(bitmap, 0f, 0f, null)
+                    }
+                    !videoPlayed -> {
+                        playVideo()
+                        // Optionally draw a frame or a placeholder while video is playing
+                    }
+                    videoPlayed && !wallpaperSet -> {
+                        val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
+                        canvas.drawBitmap(bitmap, 0f, 0f, null)
+                        setWallpaperOnce(bitmap)
+                    }
+                    else -> {
+                        val bitmap = BitmapFactory.decodeResource(context.resources, postImageRes)
+                        canvas.drawBitmap(bitmap, 0f, 0f, null)
+                    }
                 }
                 surfaceHolder.unlockCanvasAndPost(canvas)
             }
@@ -73,17 +83,22 @@ class WallpaperService : WallpaperService() {
                 mediaPlayer?.setSurface(surface)
                 mediaPlayer?.setOnCompletionListener {
                     videoPlayed = true
+                    mediaPlayer?.release()
+                    mediaPlayer = null
                 }
                 mediaPlayer?.start()
             }
         }
 
-        private fun setWallpaper(bitmap: Bitmap) {
-            try {
-                val wallpaperManager = WallpaperManager.getInstance(context)
-                wallpaperManager.setBitmap(bitmap)
-            } catch (e: Exception) {
-                Log.e("LiveWallpaper", "Failed to set wallpaper", e)
+        private fun setWallpaperOnce(bitmap: Bitmap) {
+            if (!wallpaperSet) {
+                try {
+                    val wallpaperManager = WallpaperManager.getInstance(context)
+                    wallpaperManager.setBitmap(bitmap)
+                    wallpaperSet = true
+                } catch (e: Exception) {
+                    Log.e("LiveWallpaper", "Failed to set wallpaper", e)
+                }
             }
         }
 

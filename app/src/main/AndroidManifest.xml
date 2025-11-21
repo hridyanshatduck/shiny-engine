@@ -5,11 +5,11 @@
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
-        
+        android:icon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         <service
-            android:name=".WallpaperService"
+            android:name="com.example.livewallpaper.WallpaperService"
             android:permission="android.permission.BIND_WALLPAPER"
             android:exported="false">
             <intent-filter>
