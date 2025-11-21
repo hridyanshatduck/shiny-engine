@@ -3,6 +3,7 @@
 This app displays an image (per.png) before unlocking, plays a video (vid1.mp4) after unlocking, then shows another image (post.png) and sets it as the wallpaper. It is optimized for battery usage and landscape tablets.
 
 ## Features
+-very reliable
 - Image before unlock
 - Video after unlock
 - Image after video ends, set as wallpaper
